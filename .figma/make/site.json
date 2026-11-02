@@ -1,0 +1,10 @@
+{
+  "description": "帮助销售团队查看企业跟进记录，并在详情面板中集中了解沟通历史、客户信息和后续行动。",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
