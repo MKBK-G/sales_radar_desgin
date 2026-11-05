@@ -10,6 +10,8 @@ import {
 } from "./ui"
 import Opportunities from "./Opportunities"
 import EntryScreen from "./EntryScreen"
+import type { GuideDestination } from "./QuickStartGuide"
+import QuickStartModal from "./QuickStartModal"
 import "./sidebar.css"
 import IndustryWorkspace from "./IndustryWorkspace"
 import type { IndustryView } from "./industry-data"
@@ -430,6 +432,7 @@ function SectionTitle({
 
 export default function App() {
   const [showEntry, setShowEntry] = useState(true)
+  const [guideOpen, setGuideOpen] = useState(false)
   const [companies, setCompanies] = useState(initialCompanies)
   const [selected, setSelected] = useState(0)
   const [drawer, setDrawer] = useState(false)
@@ -691,9 +694,35 @@ export default function App() {
         (filter === "全部客户" || c.status === filter),
     )
 
+  const navigateFromGuide = (destination: GuideDestination) => {
+    setGuideOpen(false)
+    setDrawer(false)
+    setModal(null)
+    if (destination === "industry") {
+      setNav("我的行业")
+      setIndustryView("chat")
+      setIndustryConversationRequest((prev) => prev + 1)
+    } else if (destination === "opportunities") {
+      setNav("今日商机")
+    } else {
+      setNav("跟进记录")
+      setSearch("")
+      setFilter(destination === "followups" ? "待跟进" : "全部客户")
+      setFollowStarredOnly(false)
+      if (destination === "contacts") {
+        const index = companies.findIndex((item) => item.followed && item.status === "待跟进")
+        const fallback = companies.findIndex((item) => item.followed)
+        if (index >= 0 || fallback >= 0) openCompany(index >= 0 ? index : fallback, 2)
+        else notify("还没有跟进企业，请先在今日商机中加入跟进")
+      }
+    }
+    if (window.matchMedia("(max-width: 700px)").matches) setSidebarCollapsed(true)
+  }
+
   if (showEntry) return <EntryScreen onEnter={() => setShowEntry(false)} />
 
   return (
+    <>
     <div
       className={`app-shell ${sidebarCollapsed ? "sidebar-is-collapsed" : ""}`}
     >
@@ -779,6 +808,20 @@ export default function App() {
         <div className="reference-sidebar-bottom">
           <Button
             variant="ghost"
+            className="sidebar-guide-button"
+            aria-label="快速上手指南"
+            title={sidebarCollapsed ? "快速上手指南" : undefined}
+            onClick={() => {
+              setDrawer(false)
+              setModal(null)
+              setGuideOpen(true)
+            }}
+          >
+            <Icon name="help" size={15} />
+            <span>快速上手指南</span>
+          </Button>
+          <Button
+            variant="ghost"
             className="sidebar-describe-button"
             aria-label="描述我的产品"
             title={sidebarCollapsed ? "描述我的产品" : undefined}
@@ -831,6 +874,7 @@ export default function App() {
         <IndustryWorkspace
           conversationRequest={industryConversationRequest}
           active={nav === "我的行业"}
+          suspended={guideOpen}
           market={market}
           view={industryView}
           onViewChange={setIndustryView}
@@ -2114,5 +2158,11 @@ export default function App() {
         </div>
       )}
     </div>
+        <QuickStartModal
+          open={guideOpen}
+          onDismiss={() => setGuideOpen(false)}
+          onNavigate={navigateFromGuide}
+        />
+    </>
   )
 }

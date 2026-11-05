@@ -8,6 +8,7 @@ import "./industry.css"
 type Props = {
   conversationRequest?: number
   active: boolean
+  suspended?: boolean
   market: Market
   view: IndustryView
   onViewChange: (view: IndustryView) => void
@@ -16,6 +17,7 @@ type Props = {
 export default function IndustryWorkspace({
   conversationRequest = 0,
   active,
+  suspended = false,
   market,
   view,
   onViewChange,
@@ -46,8 +48,8 @@ export default function IndustryWorkspace({
     if (conversationRequest > 0) startChat(null)
   }, [conversationRequest])
   useEffect(() => {
-    if (!active) setKnowledge(null)
-  }, [active])
+    if (!active || suspended) setKnowledge(null)
+  }, [active, suspended])
   useEffect(() => {
     if (!active || !knowledge) return
     const previous = document.activeElement as HTMLElement | null
@@ -347,15 +349,14 @@ export default function IndustryWorkspace({
         hidden={view !== "chat"}
       >
         <IndustryChat
-          active={active && view === "chat"}
+          active={active && view === "chat" && !suspended}
           industry={industries.find((i) => i.id === chatIndustryId)}
           market={market}
           newChatRequest={newChatRequest}
           onBack={() => onViewChange("overview")}
-          onNotify={onNotify}
         />
       </div>
-      {knowledge && active && view === "overview" && (
+      {knowledge && active && !suspended && view === "overview" && (
         <div className="knowledge-backdrop" onClick={() => setKnowledge(null)}>
           <section
             className="knowledge-drawer"
