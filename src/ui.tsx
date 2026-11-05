@@ -1,9 +1,8 @@
 import type {
   ButtonHTMLAttributes,
-  InputHTMLAttributes,
+  ComponentPropsWithRef,
   ReactNode,
   SelectHTMLAttributes,
-  TextareaHTMLAttributes,
 } from "react"
 
 export function Button({
@@ -21,11 +20,11 @@ export function Button({
   )
 }
 
-export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
+export function Input(props: ComponentPropsWithRef<"input">) {
   return <input {...props} className={`input ${props.className || ""}`} />
 }
 
-export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea(props: ComponentPropsWithRef<"textarea">) {
   return (
     <textarea
       {...props}
@@ -59,7 +58,7 @@ export function Heading({
   return <h2 className={className}>{children}</h2>
 }
 
-export type IconName = "grid" | "sparkles" | "users" | "chart" | "briefcase" | "settings" | "help" | "chevron" | "arrow" | "search" | "plus" | "close" | "more" | "clock" | "calendar" | "check" | "phone" | "mail" | "file" | "external" | "building" | "target" | "history" | "bell" | "logout" | "filter" | "message" | "star" | "thumbUp" | "thumbDown" | "pin" | "globe"
+export type IconName = "grid" | "sparkles" | "users" | "chart" | "briefcase" | "settings" | "help" | "chevron" | "arrow" | "search" | "plus" | "close" | "more" | "clock" | "calendar" | "check" | "phone" | "mail" | "file" | "external" | "building" | "target" | "history" | "bell" | "logout" | "filter" | "message" | "star" | "thumbUp" | "thumbDown" | "pin" | "globe" | "paperclip" | "brain" | "send" | "stop" | "copy" | "panel" | "trash" | "navOpportunity" | "navIndustry" | "navFollow"
 
 export function Icon({
   name,
@@ -71,6 +70,62 @@ export function Icon({
   className?: string
 }) {
   const paths: Record<IconName, ReactNode> = {
+    navOpportunity: (
+      <>
+        <path d="m12 4 8 8-8 8-8-8Z" />
+        <path d="m12 8 4 4-4 4-4-4Z" />
+      </>
+    ),
+    navIndustry: (
+      <>
+        <path d="M4 5h6v14H4ZM14 5h6v14h-6Z" />
+        <path d="M10 8h4M10 16h4" />
+      </>
+    ),
+    navFollow: (
+      <>
+        <rect x="4" y="4" width="16" height="16" rx="1" />
+        <rect x="9" y="9" width="6" height="6" rx=".5" />
+      </>
+    ),
+    paperclip: (
+      <path d="m8 13 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l9-9a4 4 0 0 1 6 6l-8 8a2 2 0 0 1-3-3l7-7" />
+    ),
+    brain: (
+      <>
+        <path d="M12 5a3 3 0 0 0-5-2 4 4 0 0 0-3 6 4 4 0 0 0-1 7 4 4 0 0 0 6 5 3 3 0 0 0 3-3ZM12 5a3 3 0 0 1 5-2 4 4 0 0 1 3 6 4 4 0 0 1 1 7 4 4 0 0 1-6 5 3 3 0 0 1-3-3Z" />
+        <path d="M7 9c3 0 3 3 3 3M17 9c-3 0-3 3-3 3M7 16h3M14 16h3" />
+      </>
+    ),
+    send: <path d="M12 20V4m-6 6 6-6 6 6" />,
+    stop: (
+      <rect
+        x="6"
+        y="6"
+        width="12"
+        height="12"
+        rx="2"
+        fill="currentColor"
+        stroke="none"
+      />
+    ),
+    copy: (
+      <>
+        <rect x="8" y="8" width="12" height="13" rx="2" />
+        <path d="M16 8V3H3v13h5" />
+      </>
+    ),
+    panel: (
+      <>
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <path d="M9 4v16M5.5 8h1M5.5 11h1" />
+      </>
+    ),
+    trash: (
+      <>
+        <path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" />
+      </>
+    ),
     pin: (
       <>
         <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z" />

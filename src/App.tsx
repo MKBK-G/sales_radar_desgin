@@ -9,6 +9,10 @@ import {
   type IconName,
 } from "./ui"
 import Opportunities from "./Opportunities"
+import EntryScreen from "./EntryScreen"
+import "./sidebar.css"
+import IndustryWorkspace from "./IndustryWorkspace"
+import type { IndustryView } from "./industry-data"
 import { seedGeography, type Geography, type Market } from "./regions"
 import { Evaluation, StarButton } from "./CustomerControls"
 import {
@@ -369,13 +373,10 @@ const tabs = ["跟进概览", "跟进记录", "联系人", "企业信息与动�
 const navItems: {
   label: string
   icon: IconName
-  tag?: string
 }[] = [
-  { label: "工作台", icon: "grid" },
-  { label: "今日商机", icon: "sparkles", tag: "14" },
-  { label: "市场洞察", icon: "chart" },
-  { label: "跟进记录", icon: "users" },
-  { label: "企业资源库", icon: "building" },
+  { label: "今日商机", icon: "navOpportunity" },
+  { label: "我的行业", icon: "navIndustry" },
+  { label: "跟进记录", icon: "navFollow" },
 ]
 const contacts = [
   {
@@ -428,6 +429,7 @@ function SectionTitle({
 }
 
 export default function App() {
+  const [showEntry, setShowEntry] = useState(true)
   const [companies, setCompanies] = useState(initialCompanies)
   const [selected, setSelected] = useState(0)
   const [drawer, setDrawer] = useState(false)
@@ -465,13 +467,25 @@ export default function App() {
   const [planDate, setPlanDate] = useState(nextDate)
   const [planAction, setPlanAction] = useState(nextAction)
   const [formError, setFormError] = useState("")
-  const [nav, setNav] = useState("今日商机")
+  const [nav, setNav] = useState("我的行业")
+  const [industryView, setIndustryView] = useState<IndustryView>("overview")
+  const [industryConversationRequest, setIndustryConversationRequest] =
+    useState(0)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => window.matchMedia("(max-width: 700px)").matches,
+  )
   const [market, setMarket] = useState<Market>("domestic")
   const [followStarredOnly, setFollowStarredOnly] = useState(false)
   const [ratingDraft, setRatingDraft] = useState<number | null>(null)
   const [tagDraft, setTagDraft] = useState<string[]>([])
   const [customTagOptions, setCustomTagOptions] = useState<string[]>([])
   const dialogRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 700px)")
+    const change = () => setSidebarCollapsed(media.matches)
+    media.addEventListener("change", change)
+    return () => media.removeEventListener("change", change)
+  }, [])
   const company = companies[selected]
   const activeRecords = selected === 0 ? records : []
   const notify = (text: string) => setToast(text)
@@ -677,119 +691,122 @@ export default function App() {
         (filter === "全部客户" || c.status === filter),
     )
 
+  if (showEntry) return <EntryScreen onEnter={() => setShowEntry(false)} />
+
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-mark">
-            <Icon name="chart" size={23} />
-          </div>
-          <div>
-            Growth Engine<span>AI 驱动业务增长</span>
-          </div>
-        </div>
+    <div
+      className={`app-shell ${sidebarCollapsed ? "sidebar-is-collapsed" : ""}`}
+    >
+      {!sidebarCollapsed && (
+        <div
+          className="sidebar-backdrop"
+          aria-hidden="true"
+          onClick={() => setSidebarCollapsed(true)}
+        />
+      )}
+      <aside className="sidebar" id="main-navigation" aria-label="业务导航">
         <Button
-          className="workspace"
           variant="ghost"
-          onClick={() =>
-            notify(
-              `当前监测市场：${
-                market === "domestic"
-                  ? "国内市场 · 内贸获客"
-                  : "海外市场 · 外贸获客"
-              }`,
-            )
-          }
+          className="sidebar-collapse-button"
+          aria-label={sidebarCollapsed ? "展开侧栏" : "收起侧栏"}
+          aria-expanded={!sidebarCollapsed}
+          aria-controls="main-navigation"
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
         >
-          <span className="workspace-logo">同</span>
-          <span>
-            监测市场
-            <span className="workspace-sub">
-              {market === "domestic"
-                ? "国内市场 · 内贸获客"
-                : "海外市场 · 外贸获客"}
-            </span>
-          </span>
-          <Icon name="chevron" size={14} />
+          <Icon
+            name="chevron"
+            size={14}
+            className={sidebarCollapsed ? "" : "rotate"}
+          />
         </Button>
-        <div className="nav-label">业务空间</div>
-        <nav>
+        <div className="reference-sidebar-brand">
+          <div className="sidebar-brand-full">
+            <strong>
+              AI <span>Growth</span>
+              <br />
+              Engine
+            </strong>
+            <span>销售雷达 · MVP</span>
+          </div>
+          <strong
+            className="sidebar-brand-compact"
+            aria-label="AI Growth Engine"
+          >
+            AI
+          </strong>
+        </div>
+        <div className="sidebar-view-card">
+          <span>当前业务视图</span>
+          <strong>
+            {market === "domestic"
+              ? "国内市场 · 内贸获客"
+              : "海外市场 · 外贸获客"}
+          </strong>
+        </div>
+        <nav aria-label="主导航">
           {navItems.map((item) => (
             <Button
               key={item.label}
               variant="ghost"
               className={`nav-item ${nav === item.label ? "active" : ""}`}
               aria-label={item.label}
+              aria-current={nav === item.label ? "page" : undefined}
+              title={sidebarCollapsed ? item.label : undefined}
               onClick={() => {
-                if (item.label !== "跟进记录" && item.label !== "今日商机")
-                  notify(`${item.label}不在本次设计预览范围内`)
-                else {
-                  setNav(item.label)
-                  setDrawer(false)
-                }
+                setNav(item.label)
+                setDrawer(false)
+                if (item.label === "我的行业") setIndustryView("overview")
+                if (window.matchMedia("(max-width: 700px)").matches)
+                  setSidebarCollapsed(true)
               }}
             >
-              <Icon name={item.icon} />
-              <span>{item.label}</span>
-              {item.tag && (
-                <span className="nav-count">
+              <Icon name={item.icon} size={13} />
+              <span className="nav-item-label">
+                {item.label}
+                <small>
                   {item.label === "今日商机"
-                    ? companies.filter((c) => c.geography.market === market)
-                        .length
-                    : item.tag}
-                </span>
-              )}
-              {nav === item.label && <span className="active-dot" />}
+                    ? `${
+                        market === "domestic" ? "国内市场" : "海外市场"
+                      } · 实时信号`
+                    : item.label === "我的行业"
+                      ? "添加产品 · AI 自动研究"
+                      : "反馈 · 结果 · 学习"}
+                </small>
+              </span>
             </Button>
           ))}
         </nav>
-        <div className="sidebar-bottom">
-          <div className="ai-assistant">
-            <div className="assistant-orb">
-              <Icon name="sparkles" size={21} />
-            </div>
-            <div>
-              让每次跟进更有方向<span>AI 洞察，发现增长机会</span>
-            </div>
-            <Button
-              variant="ghost"
-              onClick={() => notify("可在企业详情中查看 AI 开发建议")}
-            >
-              探索 AI 能力
-              <Icon name="arrow" size={14} />
-            </Button>
-          </div>
+        <div className="reference-sidebar-bottom">
           <Button
-            className="nav-item"
             variant="ghost"
-            onClick={() => notify("当前为设计预览，无需修改设置")}
+            className="sidebar-describe-button"
+            aria-label="描述我的产品"
+            title={sidebarCollapsed ? "描述我的产品" : undefined}
+            onClick={() => {
+              setNav("我的行业")
+              setIndustryView("chat")
+              setIndustryConversationRequest((prev) => prev + 1)
+              setDrawer(false)
+              setModal(null)
+              if (window.matchMedia("(max-width: 700px)").matches)
+                setSidebarCollapsed(true)
+            }}
           >
-            <Icon name="settings" />
-            设置与管理
+            <Icon name="plus" size={14} />
+            <span>描述我的产品</span>
           </Button>
-          <Button
-            className="nav-item"
-            variant="ghost"
-            onClick={() =>
-              notify("点击企业名称即可查看详情，支持记录沟通与设置计划")
-            }
-          >
-            <Icon name="help" />
-            帮助中心
-          </Button>
-          <div className="profile">
-            <span className="avatar">张</span>
-            <div>
-              张明<span>销售经理</span>
-            </div>
-            <Icon name="chevron" size={14} />
-          </div>
         </div>
       </aside>
       <main
-        className={`main-area ${nav === "今日商机" ? "opportunity-main" : ""}`}
+        className={`main-area ${
+          nav === "今日商机"
+            ? "opportunity-main"
+            : nav === "我的行业"
+              ? "industry-main"
+              : ""
+        }`}
       >
-        {nav !== "今日商机" && (
+        {nav === "跟进记录" && (
           <header className="topbar">
             <div>
               业务空间
@@ -811,7 +828,15 @@ export default function App() {
             </div>
           </header>
         )}
-        {nav === "今日商机" ? (
+        <IndustryWorkspace
+          conversationRequest={industryConversationRequest}
+          active={nav === "我的行业"}
+          market={market}
+          view={industryView}
+          onViewChange={setIndustryView}
+          onNotify={notify}
+        />
+        {nav === "我的行业" ? null : nav === "今日商机" ? (
           <Opportunities
             market={market}
             onMarketChange={setMarket}
